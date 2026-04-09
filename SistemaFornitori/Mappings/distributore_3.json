@@ -1,0 +1,28 @@
+{
+  "Fornitore": "Distributore 3",
+  "FileType": "xlsx",
+  "HeaderRow": 0,
+  "SheetName": null,
+
+  "Columns": {
+    "EAN": "Bar Code",
+    "Articolo": "Articolo",
+    "Brand": "Descr Serie",
+    "Taglia": "Tg",
+    "Colore": "Colore Classificazione",
+    "SKU": "Codice"
+
+  },
+
+  "FixedValues": {
+    "gestLotto": "1",
+    "gestDtScadenza": "0",
+    "CodGestMatricola": "NO"
+  },
+
+  "Transforms": {
+    "EAN": "TRIM",
+    "Taglia": "TRIM",
+    "SKU": "TRIM"
+  }
+}

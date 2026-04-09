@@ -1,0 +1,59 @@
+﻿@model SistemaFornitori.ViewModels.CatalogoViewModel
+
+@{
+    ViewData["Title"] = "Lista finale";
+}
+
+<section class="card">
+    <div class="list-header">
+        <div>
+            <h2>Lista finale</h2>
+            <p class="list-sub">@Model.TotaleArticoli articoli inviati al DB interscambio</p>
+        </div>
+        <div class="list-actions">
+            <a href="/Catalogo/StampaPdf" class="btn btn-gray" target="_blank" style="text-decoration:none;">Stampa PDF</a>
+            <a href="/Catalogo/ExportExcel" class="btn btn-green" style="text-decoration:none;">Export Excel</a>
+        </div>
+    </div>
+</section>
+
+<section class="card">
+    @if (Model.TotaleArticoli == 0)
+    {
+        <div class="empty-state">
+            <p>Nessun articolo inviato. Vai su <a href="/Import">Import file</a>, seleziona gli articoli e clicca "Salva selezione".</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Articolo</th>
+                        <th>Fornitore</th>
+                        <th>Brand</th>
+                        <th>Taglia</th>
+                        <th>Colore</th>
+                        <th>EAN</th>
+                        <th>SKU</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var art in Model.Articoli)
+                    {
+                        <tr>
+                            <td>@art.Articolo</td>
+                            <td>@art.Fornitore</td>
+                            <td><span class="badge">@art.Brand</span></td>
+                            <td>@art.Taglia</td>
+                            <td>@art.Colore</td>
+                            <td class="mono">@art.EAN</td>
+                            <td class="mono">@(string.IsNullOrEmpty(art.SKU) ? "—" : art.SKU)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

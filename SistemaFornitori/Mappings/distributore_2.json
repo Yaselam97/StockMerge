@@ -1,0 +1,24 @@
+{
+  "Fornitore": "Distributore 2",
+  "FileType": "xlsx",
+  "HeaderRow": 0,
+  "SheetName": null,
+
+  "Columns": {
+    "EAN": "Codice EAN",
+    "Articolo": "Descrizione",
+    "Taglia": "Taglia",
+    "SKU": "Articolo"
+  },
+
+  "FixedValues": {
+    "gestLotto": "1",
+    "gestDtScadenza": "0",
+    "CodGestMatricola": "NO"
+  },
+
+  "Transforms": {
+    "EAN": "TRIM",
+    "Taglia": "TRIM"
+  }
+}

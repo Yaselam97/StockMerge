@@ -1,0 +1,398 @@
+﻿@model SistemaFornitori.ViewModels.ImportViewModel
+
+@{
+    ViewData["Title"] = "Import file";
+}
+
+<div class="import-overlay" id="importOverlay">
+    <div class="import-spinner"></div>
+    <div class="import-overlay-label">Importazione in corso...</div>
+</div>
+<section class="card">
+    <h2>Carica file fornitore</h2>
+
+    <form asp-controller="Import" asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm">
+        <div class="upload-zone" id="dropZone">
+            <div id="uploadEmptyState">
+                <div class="upload-icon">↑</div>
+                <div class="upload-text">Trascina il file qui oppure clicca per selezionarlo</div>
+                <div class="upload-sub">.xlsx — .csv — .json</div>
+            </div>
+
+            <div id="uploadSelectedState" class="upload-selected" style="display:none;">
+                <div class="upload-file-icon">📄</div>
+                <div class="upload-file-details">
+                    <div id="selectedFileName" class="upload-file-name"></div>
+                    <div id="selectedFileMeta" class="upload-file-meta"></div>
+                </div>
+                <button type="button" id="removeFileBtn" class="upload-remove-btn" title="Rimuovi file">✕</button>
+            </div>
+
+            <input type="file" name="file" id="fileInput" accept=".xlsx,.csv,.json" class="upload-input-hidden" />
+        </div>
+
+        <div id="fileInfo" class="file-info" style="display:none;"></div>
+
+        <div class="form-row">
+            <select name="fornitore" id="fornitoreSelect" class="select">
+                <option value="">Seleziona fornitore...</option>
+                @foreach (var f in Model.Fornitori)
+                {
+                    <option value="@f" selected="@(f == Model.FornitoreSelezionato ? "selected" : null)">@f</option>
+                }
+            </select>
+
+            <button type="submit" id="importBtn" class="btn btn-primary" disabled>Importa</button>
+        </div>
+    </form>
+
+    @if (TempData["Errore"] != null)
+    {
+        <div class="alert alert-error">@TempData["Errore"]</div>
+    }
+</section>
+
+@if (TempData["Nuovi"] != null)
+{
+    <section class="card">
+        <div class="result-grid">
+            <div class="result-card">
+                <div class="result-num green">@TempData["Nuovi"]</div>
+                <div class="result-label">Nuovi articoli</div>
+            </div>
+            <div class="result-card">
+                <div class="result-num gray">@TempData["GiaPresenti"]</div>
+                <div class="result-label">Già presenti</div>
+            </div>
+            <div class="result-card">
+                <div class="result-num red">@TempData["Errori"]</div>
+                <div class="result-label">Errori</div>
+            </div>
+        </div>
+
+        @if (TempData["DettagliErrori"] != null)
+        {
+            var errori = TempData["DettagliErrori"]!.ToString()!.Split("|");
+            <details class="error-details">
+                <summary>Dettagli errori (@errori.Length)</summary>
+                <ul>
+                    @foreach (var err in errori)
+                    {
+                        <li>@err</li>
+                    }
+                </ul>
+            </details>
+        }
+    </section>
+}
+
+<section class="card">
+    <form method="get" asp-controller="Import" asp-action="Index" class="filters-row">
+
+
+        <select name="fornitore" class="select select-sm" onchange="this.form.submit()">
+            <option value="">Tutti i fornitori</option>
+            @foreach (var f in Model.FornitoriDistinti)
+            {
+                <option value="@f" selected="@(f == Model.FiltroFornitore ? "selected" : null)">@f</option>
+            }
+        </select>
+        <select name="brand" class="select select-sm" onchange="this.form.submit()">
+            <option value="">Tutti i brand</option>
+            @foreach (var b in Model.BrandDistinti)
+            {
+                <option value="@b" selected="@(b == Model.FiltroBrand ? "selected" : null)">@b</option>
+            }
+        </select>
+
+        
+
+        <select name="colore" class="select select-sm" onchange="this.form.submit()">
+            <option value="">Tutti i colori</option>
+            @foreach (var c in Model.ColoriDistinti)
+            {
+                <option value="@c" selected="@(c == Model.FiltroColore ? "selected" : null)">@c</option>
+            }
+        </select>
+
+        <select name="taglia" class="select select-sm" onchange="this.form.submit()">
+            <option value="">Tutte le taglie</option>
+            @foreach (var t in Model.TaglieDistinte)
+            {
+                <option value="@t" selected="@(t == Model.FiltroTaglia ? "selected" : null)">@t</option>
+            }
+        </select>
+        <input type="text" name="articolo" value="@Model.FiltroArticolo"
+               placeholder="Cerca articolo..." class="input input-sm" />
+
+        <button type="submit" class="btn btn-secondary">Filtra</button>
+    </form>
+</section>
+
+<section class="card">
+    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;gap:12px;align-items:center;">
+            <span class="count" id="selectedLabel">0 selezionati</span>
+            <span class="count" id="totalLabel">Totale: 0</span>
+            <button type="button" id="btnInviaSelezionati" class="btn btn-primary">Invia selezionati</button>
+        </div>
+    </div>
+
+    <div class="table-container" id="tableContainer" style="height:600px; overflow-y:auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-check"></th>
+                    <th>Articolo</th>
+                    <th>Fornitore</th>
+                    <th>Brand</th>
+                    <th>Taglia</th>
+                    <th>Colore</th>
+                    <th>EAN</th>
+                    <th>SKU</th>
+                </tr>
+            </thead>
+            <tbody id="articoliBody"></tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        const tableContainer = document.getElementById('tableContainer');
+        const articoliBody = document.getElementById('articoliBody');
+        const totalLabel = document.getElementById('totalLabel');
+        const selectedLabel = document.getElementById('selectedLabel');
+        const btnInviaSelezionati = document.getElementById('btnInviaSelezionati');
+
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const dropZone = document.getElementById('dropZone');
+        const uploadEmptyState = document.getElementById('uploadEmptyState');
+        const uploadSelectedState = document.getElementById('uploadSelectedState');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const selectedFileMeta = document.getElementById('selectedFileMeta');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const fornitoreSelect = document.getElementById('fornitoreSelect');
+        const importBtn = document.getElementById('importBtn');
+        const uploadForm = document.getElementById('uploadForm');
+
+        let start = 0;
+        const size = 200;
+        let loading = false;
+        let finished = false;
+        let total = 0;
+        const selectedIds = new Set();
+
+        const params = new URLSearchParams(window.location.search);
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 B';
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + sizes[i];
+        }
+
+        function updateImportButtonState() {
+            const hasFile = fileInput.files && fileInput.files.length > 0;
+            const hasSupplier = fornitoreSelect.value && fornitoreSelect.value.trim() !== '';
+            importBtn.disabled = !(hasFile && hasSupplier);
+        }
+
+        function showSelectedFile(file) {
+            uploadEmptyState.style.display = 'none';
+            uploadSelectedState.style.display = 'flex';
+            selectedFileName.textContent = file.name;
+            selectedFileMeta.textContent = `${formatBytes(file.size)} • ${file.type || 'file locale'}`;
+            fileInfo.style.display = 'none';
+            updateImportButtonState();
+        }
+
+        function resetSelectedFile() {
+            fileInput.value = '';
+            uploadEmptyState.style.display = 'block';
+            uploadSelectedState.style.display = 'none';
+            selectedFileName.textContent = '';
+            selectedFileMeta.textContent = '';
+            fileInfo.textContent = '';
+            fileInfo.style.display = 'none';
+            updateImportButtonState();
+        }
+
+        fileInput?.addEventListener('change', function () {
+            if (this.files.length > 0) {
+                showSelectedFile(this.files[0]);
+            } else {
+                resetSelectedFile();
+            }
+        });
+
+        fornitoreSelect?.addEventListener('change', function () {
+            updateImportButtonState();
+        });
+
+        dropZone?.addEventListener('click', function (e) {
+            if (e.target.closest('#removeFileBtn')) return;
+            fileInput.click();
+        });
+
+        removeFileBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            resetSelectedFile();
+        });
+
+        dropZone?.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+
+        dropZone?.addEventListener('dragleave', function () {
+            this.classList.remove('drag-over');
+        });
+
+        dropZone?.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                showSelectedFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        uploadForm?.addEventListener('submit', function () {
+            importBtn.disabled = true;
+            document.getElementById('importOverlay').classList.add('visible');
+        });
+
+        async function loadNextChunk() {
+            if (loading || finished) return;
+            loading = true;
+
+            const query = new URLSearchParams({
+                start: start,
+                size: size,
+                fornitore: params.get("fornitore") || "",
+                brand: params.get("brand") || "",
+                articolo: params.get("articolo") || "",
+                colore: params.get("colore") || "",
+                taglia: params.get("taglia") || ""
+            });
+
+            const response = await fetch('/Import/GetArticoliChunk?' + query.toString());
+            const data = await response.json();
+
+            total = data.total || 0;
+            totalLabel.textContent = 'Totale: ' + total;
+
+            if (!data.rows || data.rows.length === 0) {
+                finished = true;
+                loading = false;
+                return;
+            }
+
+            for (const art of data.rows) {
+                const tr = document.createElement('tr');
+                tr.dataset.id = art.id;
+
+                tr.innerHTML = `
+                    <td class="col-check">
+                        <input type="checkbox" class="row-check" data-id="${art.id}" ${selectedIds.has(art.id) ? 'checked' : ''} />
+                    </td>
+                    <td>${escapeHtml(art.articolo ?? '')}</td>
+                    <td><span class="badge">${escapeHtml(art.fornitore ?? '')}</span></td>
+                    <td>${escapeHtml(art.brand ?? '')}</td>
+                    <td>${escapeHtml(art.taglia ?? '')}</td>
+                    <td>${escapeHtml(art.colore ?? '')}</td>
+                    <td class="mono">${escapeHtml(art.ean ?? '')}</td>
+                    <td class="mono">${escapeHtml(art.sku ?? '')}</td>
+                `;
+
+                const checkbox = tr.querySelector('.row-check');
+                checkbox.addEventListener('change', function () {
+                    const id = Number(this.dataset.id);
+
+                    if (this.checked) {
+                        selectedIds.add(id);
+                        tr.classList.add('row-selected');
+                    } else {
+                        selectedIds.delete(id);
+                        tr.classList.remove('row-selected');
+                    }
+
+                    selectedLabel.textContent = selectedIds.size + ' selezionati';
+                });
+
+                articoliBody.appendChild(tr);
+            }
+
+            start += data.rows.length;
+            loading = false;
+
+            if (start >= total) {
+                finished = true;
+            }
+        }
+
+        tableContainer.addEventListener('scroll', async function () {
+            const nearBottom = tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 300;
+            if (nearBottom) {
+                await loadNextChunk();
+            }
+        });
+
+        btnInviaSelezionati.addEventListener('click', async function () {
+            if (selectedIds.size === 0) {
+                alert('Seleziona almeno un articolo.');
+                return;
+            }
+
+            const response = await fetch('/Import/InviaSelezionati', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Array.from(selectedIds))
+            });
+
+            if (!response.ok) {
+                var toastErr = document.createElement('div');
+                toastErr.className = 'save-toast';
+                toastErr.style.background = 'var(--red)';
+                toastErr.textContent = 'Errore nell\'invio';
+                btnInviaSelezionati.parentElement.style.position = 'relative';
+                btnInviaSelezionati.parentElement.appendChild(toastErr);
+                setTimeout(function () { toastErr.remove(); }, 2500);
+                return;
+            }
+
+            const data = await response.json();
+
+            // Toast conferma
+            var toast = document.createElement('div');
+            toast.className = 'save-toast';
+            toast.textContent = data.inviati + ' articoli inviati al DB interscambio ✓';
+            btnInviaSelezionati.parentElement.style.position = 'relative';
+            btnInviaSelezionati.parentElement.appendChild(toast);
+            setTimeout(function () { toast.remove(); }, 2500);
+
+            selectedIds.clear();
+            selectedLabel.textContent = '0 selezionati';
+            document.querySelectorAll('.row-check').forEach(cb => {
+                cb.checked = false;
+                cb.closest('tr')?.classList.remove('row-selected');
+            });
+        });
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        updateImportButtonState();
+        loadNextChunk();
+    </script>
+}

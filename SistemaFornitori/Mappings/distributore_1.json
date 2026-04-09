@@ -1,0 +1,27 @@
+{
+  "Fornitore": "Distributore 1",
+  "FileType": "xlsx",
+  "HeaderRow": 0,
+  "SheetName": null,
+
+  "Columns": {
+    "EAN": "Ean",
+    "Articolo": "Product name (it)",
+    "Taglia": "Size name",
+    "Colore": "Color (it)",
+    "SKU": "Sku",
+    "Prezzo": "Prezzo netto rivenditore",
+    "Brand": "Brand"
+  },
+
+  "FixedValues": {
+    "gestLotto": "1",
+    "gestDtScadenza": "0",
+    "CodGestMatricola": "NO"
+  },
+
+  "Transforms": {
+    "EAN": "TRIM",
+    "Taglia": "UPPER"
+  }
+}
