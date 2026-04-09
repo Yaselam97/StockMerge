@@ -1,470 +1,207 @@
-# \# StockMerge
-
-# 
-
-# StockMerge è un sistema di integrazione cataloghi fornitori progettato per importare, normalizzare, unificare e gestire dati prodotto provenienti da più fornitori all’interno di una struttura unica e coerente.
-
-# 
-
-# Il progetto nasce per risolvere un problema operativo molto comune: ogni fornitore invia i propri listini o cataloghi in formati diversi, con colonne diverse, strutture differenti e qualità del dato non uniforme. Questo rende il consolidamento manuale lento, ripetitivo e soggetto a errori.
-
-# 
-
-# StockMerge centralizza questo processo permettendo di importare file fornitore, applicare mapping personalizzati, normalizzare i dati, rilevare duplicati e salvare tutto in un catalogo interno unificato.
-
-# 
-
-# \---
-
-# 
-
-# \## Perché è stato creato
-
-# 
-
-# Nei flussi aziendali reali, i dati dei fornitori arrivano spesso tramite file Excel o CSV, ma ogni fornitore usa un’impostazione diversa:
-
-# 
-
-# \- nomi colonne differenti
-
-# \- strutture file non uniformi
-
-# \- campi mancanti o incoerenti
-
-# \- prodotti duplicati
-
-# \- necessità di normalizzazione manuale prima dell’utilizzo interno
-
-# 
-
-# Lo scopo di StockMerge è standardizzare e automatizzare questo processo.
-
-# 
-
-# Invece di pulire e unire manualmente i file ogni volta, il sistema fornisce un modo strutturato per:
-
-# 
-
-# \- definire mapping specifici per fornitore
-
-# \- leggere file esterni
-
-# \- trasformare i dati in un modello comune
-
-# \- individuare duplicati
-
-# \- salvare risultati puliti nel database
-
-# \- preparare i dati per i flussi interni di catalogo e stock
-
-# 
-
-# \---
-
-# 
-
-# \## Obiettivi principali
-
-# 
-
-# \- semplificare l’import dei prodotti fornitore
-
-# \- normalizzare dati esterni eterogenei
-
-# \- ridurre il lavoro manuale su Excel
-
-# \- evitare inserimenti duplicati nel catalogo
-
-# \- creare una base scalabile per future integrazioni fornitore
-
-# \- migliorare affidabilità e manutenibilità dei flussi di importazione
-
-# 
-
-# \---
-
-# 
-
-# \## Funzionalità principali
-
-# 
-
-# \- importazione file fornitore da Excel
-
-# \- configurazione mapping per fornitore tramite file JSON
-
-# \- risoluzione dinamica delle colonne in base alle regole di mapping
-
-# \- normalizzazione e trasformazione dei dati
-
-# \- rilevamento duplicati basato su EAN
-
-# \- salvataggio in un catalogo prodotto unificato
-
-# \- tracciamento risultato importazione
-
-# \- logging import per monitoraggio e troubleshooting
-
-# \- gestione fornitori con stato attivo/non attivo
-
-# 
-
-# \---
-
-# 
-
-# \## Struttura del progetto
-
-# 
-
-# L’applicazione è organizzata per mantenere le responsabilità chiare e il codice facilmente manutenibile.
-
-# 
-
-# \### Cartelle principali
-
-# 
-
-# \- `Controllers/`  
-
-# &#x20; Gestisce le richieste HTTP e il flusso dell’applicazione.
-
-# 
-
-# \- `Models/`  
-
-# &#x20; Contiene le entità di dominio come fornitori, prodotti importati, log e modelli di integrazione.
-
-# 
-
-# \- `ViewModels/`  
-
-# &#x20; Contiene i modelli dedicati all’interfaccia utente e all’interazione con le pagine.
-
-# 
-
-# \- `Services/`  
-
-# &#x20; Contiene la logica principale di business, inclusi il caricamento dei mapping e l’elaborazione degli import.
-
-# 
-
-# \- `Data/`  
-
-# &#x20; Contiene il contesto Entity Framework e la configurazione della persistenza.
-
-# 
-
-# \- `Mappings/`  
-
-# &#x20; Contiene i file JSON che definiscono come interpretare i file di ciascun fornitore.
-
-# 
-
-# \- `Views/`  
-
-# &#x20; Viste Razor ASP.NET MVC.
-
-# 
-
-# \- `wwwroot/`  
-
-# &#x20; File statici.
-
-# 
-
-# \---
-
-# 
-
-# \## Come funziona
-
-# 
-
-# \### 1. Configurazione fornitore
-
-# Ogni fornitore viene registrato nel sistema con il proprio file di mapping.
-
-# 
-
-# Esempi:
-
-# \- Clique → `clique.json`
-
-# \- Craft → `craft.json`
-
-# \- ProJob → `projob.json`
-
-# 
-
-# \### 2. Definizione del mapping
-
-# Ogni file di mapping descrive come leggere correttamente il file del fornitore:
-
-# 
-
-# \- tipo file
-
-# \- riga di intestazione
-
-# \- nome foglio
-
-# \- colonne sorgente
-
-# \- valori fissi
-
-# \- regole di trasformazione
-
-# 
-
-# Questo rende il processo di importazione flessibile, riutilizzabile ed estendibile senza dover codificare ogni formato fornitore direttamente nel codice.
-
-# 
-
-# \### 3. Importazione file
-
-# Il sistema legge il file caricato tramite EPPlus, individua le colonne necessarie in base alla configurazione del mapping ed estrae i dati prodotto.
-
-# 
-
-# \### 4. Normalizzazione dei dati
-
-# I valori importati possono essere trasformati con regole come:
-
-# 
-
-# \- `TRIM`
-
-# \- `UPPER`
-
-# \- `LOWER`
-
-# 
-
-# In questo modo i dati vengono uniformati prima del salvataggio.
-
-# 
-
-# \### 5. Controllo duplicati
-
-# I prodotti vengono verificati tramite EAN prima dell’inserimento, evitando duplicazioni nel catalogo.
-
-# 
-
-# \### 6. Salvataggio e logging
-
-# I record validi vengono salvati nel database, mentre il sistema registra statistiche di importazione e log utili per diagnosi e controllo.
-
-# 
-
-# \---
-
-# 
-
-# \## Panoramica del modello dati
-
-# 
-
-# \### `Fornitore`
-
-# Rappresenta un fornitore.
-
-# 
-
-# Campi principali:
-
-# \- `Nome`
-
-# \- `MappingFile`
-
-# \- `Attivo`
-
-# \- `DataCreazione`
-
-# 
-
-# \### `ArticoloFornitore`
-
-# Rappresenta un articolo unificato importato da un fornitore.
-
-# 
-
-# Campi principali:
-
-# \- `EAN`
-
-# \- `Articolo`
-
-# \- `Taglia`
-
-# \- `Colore`
-
-# \- `SKU`
-
-# \- `Fornitore`
-
-# \- `Prezzo`
-
-# \- `DataImport`
-
-# \- `Selezionato`
-
-# \- `Quantita`
-
-# 
-
-# \### `ImportLog`
-
-# Memorizza informazioni tecniche e operative relative all’esecuzione degli import.
-
-# 
-
-# \### `ImportResult`
-
-# Restituisce il risultato dell’elaborazione, ad esempio numero righe processate, inserite, duplicate o in errore.
-
-# 
-
-# \---
-
-# 
-
-# \## Tecnologie utilizzate
-
-# 
-
-# \- \*\*ASP.NET Core MVC\*\*
-
-# \- \*\*C#\*\*
-
-# \- \*\*Entity Framework Core\*\*
-
-# \- \*\*SQL Server\*\*
-
-# \- \*\*EPPlus\*\*
-
-# \- \*\*Dapper\*\*
-
-# \- \*\*Mapping JSON configurabili\*\*
-
-# 
-
-# \---
-
-# 
-
-# \## Scelte progettuali
-
-# 
-
-# Il progetto è stato sviluppato volutamente come un’unica applicazione ASP.NET Core MVC, per mantenere lo sviluppo rapido, leggibile e facilmente manutenibile.
-
-# 
-
-# L’architettura punta alla praticità:
-
-# 
-
-# \- MVC per una struttura chiara e produttiva
-
-# \- Services per separare la logica di business
-
-# \- file JSON per rendere i mapping estendibili
-
-# \- EF Core per la persistenza
-
-# \- EPPlus per la gestione dei file Excel
-
-# 
-
-# Questo rende l’applicazione semplice da evolvere, ma già adatta a un utilizzo reale in ambito operativo.
-
-# 
-
-# \---
-
-# 
-
-# \## Benefici
-
-# 
-
-# StockMerge permette di trasformare file fornitore frammentati in un processo strutturato e affidabile di consolidamento catalogo.
-
-# 
-
-# Benefici principali:
-
-# 
-
-# \- meno lavoro manuale
-
-# \- meno errori di inserimento dati
-
-# \- onboarding più rapido di nuovi fornitori
-
-# \- consolidamento cataloghi più semplice
-
-# \- logica di import più manutenibile
-
-# \- base scalabile per future integrazioni
-
-# 
-
-# \---
-
-# 
-
-# \## Possibili evoluzioni future
-
-# 
-
-# Possibili sviluppi futuri:
-
-# 
-
-# \- miglioramento supporto CSV
-
-# \- regole di validazione avanzate
-
-# \- dashboard storico importazioni
-
-# \- funzionalità di export
-
-# \- elaborazione asincrona per file grandi
-
-# \- gestione ruoli e permessi
-
-# \- API per integrazioni esterne
-
-# \- sincronizzazione stock con sistemi terzi
-
-# 
-
-# \---
-
-# 
-
-# \## Stato del progetto
-
-# 
-
-# Questo progetto è uno strumento operativo interno progettato per supportare il consolidamento dei cataloghi fornitore e i flussi legati a stock e articoli.
-
-# 
-
-# Attualmente rappresenta una base solida, pronta per essere estesa con funzionalità aggiuntive e integrazioni future.
-
-# 
-
-# \---
-
-# 
-
-# \## Autore
-
-# 
-
-# \*\*Yassine El Amrati\*\*
-
+# Sistema Import Fornitori
+
+Sistema web interno per importare cataloghi prodotti da file Excel/CSV dei distributori, eliminare i duplicati tramite codice EAN13, e costruire un catalogo unificato da cui selezionare gli articoli da inviare al gestionale EMSWin tramite il database di interscambio.
+
+## Il Problema
+
+Un distributore di articoli sportivi riceve file Excel dai propri fornitori con migliaia di articoli ogni stagione. Ogni fornitore ha un formato diverso, i file contengono sia articoli nuovi che vecchi, e lo stesso EAN può comparire in fogli diversi. Gestire tutto manualmente è lento e soggetto a errori.
+
+## La Soluzione
+
+Un'applicazione ASP.NET Core MVC che:
+
+- **Importa** file Excel/CSV/JSON da qualsiasi distributore, leggendo tutti i fogli in automatico
+- **Elimina i duplicati** usando l'EAN13 come chiave univoca
+- **Configura ogni distributore** con un file JSON di mapping — aggiungere un nuovo distributore non richiede modifiche al codice
+- **Seleziona** gli articoli da inviare con filtri a cascata (fornitore → brand → colore → taglia)
+- **Scrive** gli articoli selezionati nel database di interscambio (`005_AnArticoli` + `005_AnBarcode`), da cui ConnecTilog li porta in EMSWin
+- **Esporta** la lista finale in PDF e Excel
+
+## Architettura
+
+Progetto singolo ASP.NET Core MVC (.NET 10), struttura semplice e diretta:
+
+```
+SistemaFornitori/
+├── Controllers/
+│   ├── ImportController.cs        # Upload, filtri, invio al DB interscambio
+│   └── CatalogoController.cs      # Lista finale, export PDF/Excel
+├── Models/
+│   ├── ArticoloFornitore.cs       # Entità principale — catalogo unificato
+│   ├── ImportResult.cs            # Risultato di un'operazione di import
+│   ├── InterscambioModels.cs      # Modelli per 005_AnArticoli e 005_AnBarcode
+│   └── SupplierMapping.cs         # Configurazione mapping colonne per distributore
+├── ViewModels/
+│   ├── ImportViewModel.cs         # Dati per la pagina Import
+│   └── CatalogoViewModel.cs       # Dati per la pagina Lista Finale
+├── Services/
+│   ├── ImportService.cs           # Parsing file + dedup EAN + salvataggio DB
+│   ├── MappingService.cs          # Caricamento file JSON di configurazione
+│   ├── InterscambioService.cs     # Scrittura/lettura DB EMS_Premi_Interscambio
+│   └── ExportService.cs           # Generazione PDF e Excel
+├── Data/
+│   └── AppDbContext.cs            # Entity Framework Core — DB SistemaFornitori
+├── Mappings/
+│   ├── distributore_1.json        # Mapping colonne per il distributore 1
+│   ├── distributore_2.json        # Mapping colonne per il distributore 2
+│   └── distributore_3.json        # Mapping colonne per il distributore 3
+├── Views/
+│   ├── Import/Index.cshtml        # Pagina upload + tabella con scroll infinito
+│   ├── Catalogo/Index.cshtml      # Lista finale con export
+│   └── Shared/_Layout.cshtml      # Layout condiviso
+├── wwwroot/css/site.css           # Stili custom (no Bootstrap)
+├── Program.cs                     # Entry point e registrazione DI
+└── appsettings.json               # Connection strings
+```
+
+## Flusso Operativo
+
+```
+1. IMPORT
+   File Excel → Upload sul sito → Scegli distributore
+                                        ↓
+   Parsing automatico (tutti i fogli) → Dedup EAN13
+                                        ↓
+   Salvataggio nel DB SistemaFornitori (tabella ArticoliFornitori)
+
+2. SELEZIONE + INVIO
+   Tabella articoli con filtri a cascata → Seleziona con checkbox
+                                        ↓
+   "Invia selezionati" → Scrittura in 005_AnArticoli + 005_AnBarcode
+                          (DB EMS_Premi_Interscambio)
+                                        ↓
+   ConnecTilog legge le tabelle 005_* → Porta in EMSWin
+
+3. LISTA FINALE
+   Mostra solo articoli già inviati al DB interscambio
+                                        ↓
+   Stampa PDF / Export Excel
+```
+
+## Database
+
+Il sistema utilizza due database sullo stesso SQL Server:
+
+**`SistemaFornitori`** — database interno, gestito da EF Core:
+- `ArticoliFornitori` — catalogo unificato con EAN UNIQUE, brand, fornitore, taglia, colore, SKU, prezzo
+
+**`EMS_Premi_Interscambio_test`** — database di interscambio esistente, scritto via Dapper:
+- `005_AnArticoli` — anagrafica articoli per il cliente 005 (stessa struttura delle 002, 006, 008)
+- `005_AnBarcode` — barcode associati agli articoli
+- `005_AnCliForn` — anagrafica clienti/fornitori (inserimento manuale)
+
+## Mapping Distributori
+
+Ogni distributore ha un file JSON nella cartella `Mappings/`. Il file definisce la corrispondenza tra le colonne del file Excel e i campi del sistema:
+
+```json
+{
+  "Fornitore": "Distributore 1",
+  "FileType": "xlsx",
+  "HeaderRow": 0,
+  "SheetName": null,
+  "Columns": {
+    "EAN": "Ean",
+    "Articolo": "Product name (it)",
+    "Taglia": "Size name",
+    "Colore": "Color (it)",
+    "SKU": "Sku",
+    "Prezzo": "Prezzo netto rivenditore",
+    "Brand": "Brand"
+  },
+  "Transforms": {
+    "EAN": "TRIM",
+    "Taglia": "UPPER"
+  }
+}
+```
+
+**Per aggiungere un nuovo distributore**: copia un JSON esistente, rinomina il file, adatta i nomi delle colonne. Zero codice da toccare.
+
+## Stack Tecnologico
+
+- **ASP.NET Core MVC** (.NET 10) — framework web
+- **Entity Framework Core** — ORM per il DB interno SistemaFornitori
+- **Dapper** — micro-ORM per le scritture nel DB interscambio (tabelle 005_* con struttura fissa)
+- **EPPlus** — parsing file Excel (lettura multi-foglio)
+- **QuestPDF** — generazione PDF
+- **SQL Server** — database
+
+## Scelte Tecniche
+
+**Perché un progetto singolo e non 3 layer?**
+Il sistema ha 2 use case (importa file, mostra catalogo). Separare in Core/Infrastructure/Web per un progetto così semplice aggiunge complessità senza beneficio.
+
+**Perché EF Core per un DB e Dapper per l'altro?**
+Il DB `SistemaFornitori` lo gestiamo noi — EF Core con migration è perfetto. Le tabelle `005_*` nel DB interscambio hanno una struttura fissa definita da ConnecTilog — un secondo DbContext sarebbe eccessivo per semplici INSERT.
+
+**Perché scroll infinito nella tabella?**
+Con ~68.000 articoli, renderizzare tutto server-side bloccherebbe il browser. Il caricamento a chunk da 200 righe con scroll infinito mantiene la pagina reattiva.
+
+**Perché i filtri sono a cascata?**
+Se scegli un fornitore, i brand nel dropdown mostrano solo quelli di quel fornitore. Se poi scegli un brand, i colori mostrano solo quelli di quel brand. Evita confusione con migliaia di valori.
+
+**Perché nessuna tabella Fornitori nel DB?**
+I distributori sono definiti nei file JSON. Aggiungerne uno è copiare un file, non fare una INSERT. Meno tabelle = meno complessità.
+
+## Configurazione
+
+### Prerequisiti
+
+- .NET 10 SDK
+- SQL Server (accesso a due database)
+- Visual Studio 2022+ (consigliato)
+
+### Setup
+
+1. Clona il repository
+2. Aggiorna le connection strings in `appsettings.json`:
+   ```json
+   "ConnectionStrings": {
+     "SistemaFornitori": "Server=TUO_SERVER;Database=SistemaFornitori;User Id=sa;Password=TUA_PASSWORD;TrustServerCertificate=True;",
+     "Interscambio": "Server=TUO_SERVER;Database=EMS_Premi_Interscambio_test;User Id=sa;Password=TUA_PASSWORD;TrustServerCertificate=True;"
+   }
+   ```
+3. Crea il database `SistemaFornitori` su SQL Server
+4. In Package Manager Console:
+   ```
+   Add-Migration InitialCreate
+   Update-Database
+   ```
+5. Assicurati che le tabelle `005_AnArticoli`, `005_AnBarcode` e `005_AnCliForn` esistano nel DB interscambio (stessa struttura delle 006_*)
+6. Aggiorna i file JSON nella cartella `Mappings/` con i nomi reali delle colonne dei tuoi file Excel
+7. F5 per avviare
+
+### NuGet Packages
+
+- `Microsoft.EntityFrameworkCore.SqlServer`
+- `Microsoft.EntityFrameworkCore.Tools`
+- `EPPlus`
+- `Dapper`
+- `QuestPDF`
+
+## Struttura Tabella ArticoliFornitori
+
+| Campo | Tipo | Note |
+|-------|------|------|
+| Id | int | PK, auto-increment |
+| EAN | nvarchar(13) | UNIQUE — chiave di dedup |
+| Articolo | nvarchar(200) | Nome prodotto |
+| Fornitore | nvarchar(100) | Nome distributore (dal JSON) |
+| Brand | nvarchar(100) | Brand dal file (Clique, Craft, ecc.) |
+| Taglia | nvarchar(20) | |
+| Colore | nvarchar(50) | |
+| SKU | nvarchar(50) | Codice articolo fornitore |
+| Prezzo | decimal(10,2) | Prezzo netto (opzionale) |
+| DataImport | datetime2 | Default GETDATE() |
+
+## Sviluppo Futuro
+
+- **Fase 2**: Gestione ordini (tabelle `005_OrdIngressoTes`, `005_OrdIngressoRig`, `005_OrdUscitaTES`, `005_OrdUscitaRIG`)
+- **005_AnCliForn**: Inserimento manuale fornitori nell'anagrafica interscambio
+- Autenticazione utenti
+- Log delle operazioni di invio al DB interscambio
+
+---
+
+*Sviluppato presso TiLog — 2026*
